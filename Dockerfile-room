@@ -13,6 +13,7 @@ COPY ./src ./src
 
 # Build TypeScript to JavaScript
 RUN npm install
+RUN npm run build
 
 # Copy fix in MCP code
 COPY ./sse_cjs.js ./node_modules/@modelcontextprotocol/sdk/dist/cjs/server/sse.js
