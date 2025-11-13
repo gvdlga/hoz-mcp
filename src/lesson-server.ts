@@ -5,13 +5,12 @@ import cors from "cors";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { JSONRPCMessage, Tool } from "@modelcontextprotocol/sdk/types.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol";
 import { McpFunction } from "./functions/function";
 import { GetScheduleFunction } from "./functions/getschedule.function.js";
 import { IsCustomerFunction } from "./functions/iscustomer.function.js";
 import { RegisterLessonFunction } from "./functions/registerlesson.function.js";
 import { CancelBookedLessonFunction } from "./functions/cancelbookedlesson.function.js";
-import { ApiKeyManager } from "./functions/apikeymanager.js";
+import { ApiKeyManager } from "./utils/apikeymanager-lesson.js";
 import 'dotenv/config';
 
 export class LessonServer {
@@ -159,13 +158,8 @@ export class LessonServer {
         res.status(400).json({ error: 'MCP Error: sessionId is required' });
         return;
       }
+      await ApiKeyManager.loadAuthData(req);
       const transport = this.transports[sessionId];
-      if (headers) {
-        if (headers.authorization && headers.authorization.startsWith("Bearer")) {
-          const apiKey = headers.authorization.substring(7, headers.authorization.length);
-          ApiKeyManager.setApiKey(sessionId, apiKey);
-        }
-      }
       if (transport) {
         await transport.handlePostMessage(req, res);
       } else {

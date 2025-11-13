@@ -1,4 +1,4 @@
-import { ApiKeyManager } from "./apikeymanager.js";
+import { ApiKeyManager } from "../utils/apikeymanager-lesson.js";
 import { McpFunction } from "./function";
 import { z } from "zod";
 

@@ -10,7 +10,7 @@ import { IsTherapistFunction } from "./functions/istherapist.function.js";
 import { BookRoomFunction } from "./functions/bookroom.function.js";
 import { CancelBookedRoomFunction } from "./functions/cancelbookedroom.function.js";
 import { GetAvailableRoomsFunction } from "./functions/getavailablerooms.function.js";
-import { ApiKeyManager } from "./functions/apikeymanager.js";
+import { ApiKeyManager } from "./utils/apikeymanager-room.js";
 import 'dotenv/config';
 
 export class RoomServer {
@@ -158,13 +158,8 @@ export class RoomServer {
         res.status(400).json({ error: 'MCP Error: sessionId is required' });
         return;
       }
+      await ApiKeyManager.loadAuthData(req);
       const transport = this.transports[sessionId];
-      if (headers) {
-        if (headers.authorization && headers.authorization.startsWith("Bearer")) {
-          const apiKey = headers.authorization.substring(7, headers.authorization.length);
-          ApiKeyManager.setApiKey(sessionId, apiKey);
-        }
-      }
       if (transport) {
         await transport.handlePostMessage(req, res);
       } else {

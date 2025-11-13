@@ -6,9 +6,9 @@
       "esModuleInterop": true,
       "strict": true,
       "skipLibCheck": true,
-      "outDir": "dist",
-      "rootDir": "."
+      "outDir": "./dist",
+      "rootDir": "./src"
     },
-    "include": ["**/*.ts"],
+    "include": ["src/**/*.*", "src/run-lesson.ts", "src/run-room.ts"],
     "exclude": ["node_modules"]
   } 
