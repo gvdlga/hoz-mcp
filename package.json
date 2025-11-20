@@ -1,6 +1,6 @@
 {
   "name": "hoz-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server for interaction with the lesson and event schedule.",
   "author": "Genius Agents",
   "homepage": "https://geniusagents.nl/",
@@ -14,10 +14,13 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/lesson-server.js",
-    "start-lesson-server": "node dist/lesson-server.js",
-    "start-room-server": "node dist/room-server.js"
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index-lesson.js', '755')\" && node -e \"require('fs').chmodSync('dist/index-room.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector",
+    "start": "node dist/index-lesson.js",
+    "start-lesson": "node dist/index-lesson.js",
+    "start-room": "node dist/index-room.js"
   },
   "dependencies": {
     "@geniusagents/mcp": "^0.2.0",
