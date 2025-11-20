@@ -1,5 +1,4 @@
-import { ApiKeyManager } from "../utils/apikeymanager-room.js";
-import { McpFunction } from "./function";
+import { ApiKeyManager, McpFunction, ResponseFormatter } from "@geniusagents/mcp";
 import { z } from "zod";
 
 export class GetAvailableRoomsFunction implements McpFunction {
@@ -7,15 +6,15 @@ export class GetAvailableRoomsFunction implements McpFunction {
     public name: string = "getAvailableRooms";
 
     public description: string = "Return the availability of rooms between the given start date (startDate, yyyy-MM-dd) and the given end date (endDate, yyyy-MM-dd). \n" +
-      "The tool returns a collection of rooms with the aiablability for each daypart per date. \n" +
-      "Dayparts are from 09:00 - 13:00 (morning), 13:30 - 17:30 (afternoon), 18:00 - 22:00 (evening). \n" +
-      "The following data will be returned: \n" +
-      "- The identifier of the room (roomId); \n" +
-      "- The name of the room (name); \n" +
-      "- The price of the room in Euro (price); \n" +
-      "- The date availability (date, in yyyy-MM-dd format); \n" +
-      "- The day of the availability (day); \n" +
-      "- A list of available dayparts (i.e. [09:00 - 13:00, 18:00 - 22:00]); \n";
+        "The tool returns a collection of rooms with the aiablability for each daypart per date. \n" +
+        "Dayparts are from 09:00 - 13:00 (morning), 13:30 - 17:30 (afternoon), 18:00 - 22:00 (evening). \n" +
+        "The following data will be returned: \n" +
+        "- The identifier of the room (roomId); \n" +
+        "- The name of the room (name); \n" +
+        "- The price of the room in Euro (price); \n" +
+        "- The date availability (date, in yyyy-MM-dd format); \n" +
+        "- The day of the availability (day); \n" +
+        "- A list of available dayparts (i.e. [09:00 - 13:00, 18:00 - 22:00]); \n";
 
     public inputschema: any = {
         type: "object",
@@ -37,7 +36,7 @@ export class GetAvailableRoomsFunction implements McpFunction {
             const sessionId = extra.sessionId;
             let apiKey: string | undefined;
             if (sessionId) {
-                apiKey = ApiKeyManager.getApiKey(sessionId);
+                apiKey = ApiKeyManager.getInstance().getApiKey(sessionId);
                 console.log("Api Key from ApiKeyManager: " + apiKey);
             } else {
                 apiKey = process.env.HOZ_API_KEY;
@@ -49,9 +48,9 @@ export class GetAvailableRoomsFunction implements McpFunction {
             if (!args) {
                 throw new Error("No start and end date provided in parameters.")
             }
-        
-            const {startDate, endDate } = args;
-            const response = await fetch("https://getavailableroomsv2-illi72bbyq-uc.a.run.app?startDate=" + startDate + "&endDate=" + endDate, 
+
+            const { startDate, endDate } = args;
+            const response = await fetch("https://getavailableroomsv2-illi72bbyq-uc.a.run.app?startDate=" + startDate + "&endDate=" + endDate,
                 {
                     method: "GET",
                     headers: {
@@ -61,14 +60,14 @@ export class GetAvailableRoomsFunction implements McpFunction {
             );
             const results: Array<any> = await response.json();
             const content: Array<any> = [];
-            for (let i=0; i<results.length; i++) {
+            for (let i = 0; i < results.length; i++) {
                 const roomInfo = results[i];
                 const availabilities: Array<any> = roomInfo.availability;
-                for (let j=0; j<availabilities.length; j++) {
+                for (let j = 0; j < availabilities.length; j++) {
                     const availability = availabilities[j];
                     let dayParts = "[";
                     let first = true;
-                    for (let k=0; k<availability.dayParts.length; k++) {
+                    for (let k = 0; k < availability.dayParts.length; k++) {
                         if (!first) {
                             dayParts = dayParts + ", ";
                         }
@@ -77,25 +76,16 @@ export class GetAvailableRoomsFunction implements McpFunction {
                     }
                     dayParts = dayParts + "]";
                     const text = "roomId: " + roomInfo.roomId + ", name: " + roomInfo.name + ", price: " + roomInfo.price +
-                    ", date: " + availability.date + ", day: " + availability.day + ", dayparts:" + dayParts;
+                        ", date: " + availability.date + ", day: " + availability.day + ", dayparts:" + dayParts;
                     content.push({
                         type: "text",
                         text: text
                     });
                 }
             }
-            return {
-                content: content,
-                isError: false
-            };
-        } catch (error) {
-            return { 
-                content: [{
-                    type: "text",
-                    text: ("Error: " + error)
-                }],
-                isError: true
-            }
-        } 
+            return ResponseFormatter.formatSuccess(content);
+        } catch (error: any) {
+            return ResponseFormatter.formatError(error);
+        }
     }
 }

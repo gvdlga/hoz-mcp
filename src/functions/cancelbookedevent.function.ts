@@ -1,5 +1,4 @@
-import { ApiKeyManager } from "../utils/apikeymanager-lesson.js";
-import { McpFunction } from "./function";
+import { ApiKeyManager, McpFunction, ResponseFormatter } from "@geniusagents/mcp";
 import { z } from "zod";
 
 export class CancelBookedEventFunction implements McpFunction {
@@ -7,9 +6,9 @@ export class CancelBookedEventFunction implements McpFunction {
     public name: string = "cancelBookedEvent";
 
     public description: string = "Cancel the reservation for a customer of an event at Home of Zen." +
-      "The tool returns the following data:" +
-      "- Success, when the cancellation was succesful" + 
-      "- An error, when the cancellation was not succesful";
+        "The tool returns the following data:" +
+        "- Success, when the cancellation was succesful" +
+        "- An error, when the cancellation was not succesful";
 
     public inputschema = {
         type: "object",
@@ -35,7 +34,7 @@ export class CancelBookedEventFunction implements McpFunction {
             const sessionId = extra.sessionId;
             let apiKey: string | undefined;
             if (sessionId) {
-                apiKey = ApiKeyManager.getApiKey(sessionId);
+                apiKey = ApiKeyManager.getInstance().getApiKey(sessionId);
                 console.log("Api Key from ApiKeyManager: " + apiKey);
             } else {
                 apiKey = process.env.HOZ_API_KEY;
@@ -47,14 +46,14 @@ export class CancelBookedEventFunction implements McpFunction {
             if (!args) {
                 throw new Error("No parameters provided.")
             }
-        
+
             const { email, date, time } = args;
             const body = {
                 email: email,
                 date: date,
                 time: time
             }
-            const response = await fetch("https://cancelbookedeventv2-illi72bbyq-uc.a.run.app", 
+            const response = await fetch("https://cancelbookedeventv2-illi72bbyq-uc.a.run.app",
                 {
                     method: "POST",
                     headers: {
@@ -64,29 +63,13 @@ export class CancelBookedEventFunction implements McpFunction {
                 } as RequestInit
             );
             const json: any = await response.json();
-            if (json.result === "Success") {
-                return { 
-                    content: [{
-                        type: "text",
-                        text: "Success"
-                    }]
-                }
-            } else {
-                return { 
-                    content: [{
-                        type: "text",
-                        text: "Error: Cancellation of booked event was not successful."
-                    }]
-                }
-            }
+            const content = [{
+                type: "text",
+                text: "Success"
+            }];
+            return ResponseFormatter.formatSuccess(content);
         } catch (error) {
-            return { 
-                content: [{
-                    type: "text",
-                    text: ("Error: " + error)
-                }],
-                isError: true
-            }
+            return ResponseFormatter.formatError(error);
         }
     }
 }

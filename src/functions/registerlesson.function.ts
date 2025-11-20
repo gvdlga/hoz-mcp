@@ -1,5 +1,4 @@
-import { ApiKeyManager } from "../utils/apikeymanager-lesson.js";
-import { McpFunction } from "./function";
+import { ApiKeyManager, McpFunction, ResponseFormatter } from "@geniusagents/mcp";
 import { z } from "zod";
 
 export class RegisterLessonFunction implements McpFunction {
@@ -7,10 +6,10 @@ export class RegisterLessonFunction implements McpFunction {
     public name: string = "registerLesson";
 
     public description: string = "Register a customer for one of the lessons given at Home of Zen." +
-      "The tool returns the following data:" +
-      "- Success, when the registration was succesful." + 
-      "- An error, when the registration was not succesful." + 
-      "The reservation system of Home of Zen will confirm the reservation by e-mail.";
+        "The tool returns the following data:" +
+        "- Success, when the registration was succesful." +
+        "- An error, when the registration was not succesful." +
+        "The reservation system of Home of Zen will confirm the reservation by e-mail.";
     public inputschema = {
         type: "object",
         lessonDate: {
@@ -43,7 +42,7 @@ export class RegisterLessonFunction implements McpFunction {
             const sessionId = extra.sessionId;
             let apiKey: string | undefined;
             if (sessionId) {
-                apiKey = ApiKeyManager.getApiKey(sessionId);
+                apiKey = ApiKeyManager.getInstance().getApiKey(sessionId);
                 console.log("Api Key from ApiKeyManager: " + apiKey);
             } else {
                 apiKey = process.env.HOZ_API_KEY;
@@ -55,7 +54,7 @@ export class RegisterLessonFunction implements McpFunction {
             if (!args) {
                 throw new Error("No parameters provided.")
             }
-        
+
             const { lessonDate, lessonId, name, email, phone } = args;
             const body = {
                 lessonDate: lessonDate,
@@ -64,7 +63,7 @@ export class RegisterLessonFunction implements McpFunction {
                 email: email,
                 phone: phone
             }
-            const response = await fetch("https://registerlessonv2-illi72bbyq-uc.a.run.app", 
+            const response = await fetch("https://registerlessonv2-illi72bbyq-uc.a.run.app",
                 {
                     method: "POST",
                     headers: {
@@ -74,25 +73,13 @@ export class RegisterLessonFunction implements McpFunction {
                 } as RequestInit
             );
             const json: any = await response.json();
-            if (json.result) {
-                return { 
-                    content: [{
-                        type: "text",
-                        text: "Success"
-                    }],
-                    isError: false
-                }
-            } else {
-                throw new Error("Registration of the lesson was not successful.");
-            }
-        } catch (error) {
-            return { 
-                content: [{
-                    type: "text",
-                    text: ("Error: " + error)
-                }],
-                isError: true
-            }
+            const content = [{
+                type: "text",
+                text: "Success"
+            }];
+            return ResponseFormatter.formatSuccess(content);
+        } catch (error: any) {
+            return ResponseFormatter.formatError(error);
         }
     }
 }
